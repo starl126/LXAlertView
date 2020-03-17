@@ -16,7 +16,7 @@
     alertView.alertViewWidth = inView.frame.size.width-100;
     
     alertView.closeImgName = @"closed_btn";
-    
+    alertView.originY = 20;
     alertView.imgName = @"xiangji";
     alertView.imgWidth = 100;
     alertView.imgHeight = 80;

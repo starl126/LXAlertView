@@ -193,7 +193,7 @@ NS_ASSUME_NONNULL_BEGIN
 ///alert view的子控件的初始y值，默认是16
 @property (nonatomic, assign, readwrite) CGFloat originY;
 
-///alert view的中心点距离父控件的中心点偏移量，默认是0
+///alert view的中心点距离父控件的中心点偏移量，默认是0,如果大于0，则整体下移；若小于0，则整体上移
 @property (nonatomic, assign, readwrite) CGFloat marginCenterY;
 
 ///图片和文本垂直方向的间距，默认值为20
