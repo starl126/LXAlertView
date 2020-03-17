@@ -21,6 +21,8 @@
 
 ///父控件
 @property (nonatomic, weak) UIView* parentView;
+///计算性属性，经过校准的父控件frame
+@property (nonatomic, assign) CGRect parentFrame;
 
 @end
 
@@ -95,15 +97,34 @@
 - (void)willMoveToSuperview:(UIView *)newSuperview {
     if (newSuperview) {
         _parentView = newSuperview;
-        self.frame = CGRectMake((newSuperview.frame.size.width-_alertViewWidth)*0.5, 0, _alertViewWidth, 0);
+        
+        //校准父控件的frame
+        [self p_adjustParentViewFrame];
+        self.frame = CGRectMake((self.parentFrame.size.width-_alertViewWidth)*0.5, 0, _alertViewWidth, 0);
         [self p_setupView];
     }
+}
+///校准父控件的frame
+- (void)p_adjustParentViewFrame {
+    CGRect parantFrame = _parentView.frame;
+    UIEdgeInsets inset = UIEdgeInsetsZero;
+    if (@available(iOS 11.0,*)) {
+        inset = self.parentView.safeAreaInsets;
+        parantFrame = CGRectMake(parantFrame.origin.x+inset.left, parantFrame.origin.y+inset.top, parantFrame.size.width-inset.left-inset.right, parantFrame.size.height-inset.top-inset.bottom);
+    }else {
+        if ([self.parentView isKindOfClass:UIScrollView.class]) {
+            UIScrollView* scrollView = (UIScrollView*)self.parentView;
+            inset = scrollView.contentInset;
+            parantFrame = CGRectMake(parantFrame.origin.x+inset.left, parantFrame.origin.y+inset.top, parantFrame.size.width-inset.left-inset.right, parantFrame.size.height-inset.top-inset.bottom);
+        }
+    }
+    self.parentFrame = parantFrame;
 }
 - (void)p_setupView {
     
     _maskBackView = UIView.alloc.init;
     _maskBackView.backgroundColor = _maskBackgroundColor;
-    _maskBackView.frame = self.parentView.bounds;
+    _maskBackView.frame = CGRectMake(0, 0, self.parentFrame.size.width, self.parentFrame.size.height);
     if (_allowMaskCallback) {
         UITapGestureRecognizer* tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(p_actionForClickMaskView)];
         [_maskBackView addGestureRecognizer:tap];
@@ -177,11 +198,12 @@
     
     //按钮处理
     [self p_actionForInitButtons];
-    
-    //计算所有控件的有效高度
+}
+#pragma mark --- layout frame
+- (void)layoutSubviews {
+    [super layoutSubviews];
     [self p_actionForUpdateOrigin];
 }
-
 #pragma mark --- actions
 - (void)setTextViewAllowInput:(BOOL)textViewAllowInput {
     _textViewAllowInput = textViewAllowInput;
@@ -370,7 +392,7 @@
     }else {}
     
     CGFloat totalHeight = self.imgView.frame.size.height+self.textLbl.frame.size.height+self.subTextLbl.frame.size.height+self.textView.frame.size.height+buttonTotalHeight+_originY+_marginBetweenImageAndText+_marginBetweenTextAndSubText+_marginBetweenSubTextAndTextView+_marginBetweenTextViewAndButton+_marginButtonBottom;
-    NSAssert(totalHeight<=self.parentView.frame.size.height, @"abnormal view's height is bigger than it's parent's");
+    NSAssert(totalHeight<=self.parentFrame.size.height, @"abnormal view's height is bigger than it's parent's");
     
     //计算控件的位置
     CGRect frame = self.imgView.frame;
@@ -406,8 +428,8 @@
         }];
     }
     //校正alert view的最终frame
-    y = (self.parentView.frame.size.height-totalHeight)*0.5;
-    self.frame = CGRectMake(self.frame.origin.x, y+_marginCenterY, self.frame.size.width, totalHeight);
+    y = (self.parentFrame.size.height-totalHeight)*0.5;
+    self.frame = CGRectMake((self.parentFrame.size.width-_alertViewWidth)*0.5, y+_marginCenterY, _alertViewWidth, totalHeight);
 }
 - (void)p_actionForClickButton:(UIButton *)sender {
     [self endEditing:YES];
